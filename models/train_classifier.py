@@ -18,6 +18,19 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
 def load_data(database_filepath):
+    '''
+    Load data from a Database file
+   
+    Parameters:
+    database_filepath (string) :  path to SQLite db
+    
+    Return:
+        X (DataFrame) : feature data
+        Y (DataFrame) : label data
+        category_names (list) : categori names
+
+    '''
+
     df = pd.read_sql_table('tbl_diaster_text', 'sqlite:///' + database_filepath)  
     X = df.loc[:,'message'] 
     Y = df.iloc[:, 4:] 
@@ -25,8 +38,19 @@ def load_data(database_filepath):
 
     return X, Y, category_names
 
+
 def tokenize(text):
+    '''
+    clean up input text by tokenizing,   lemmatizing and norormalizing  string
     
+    Parameter:
+    text (string) : String containing message for processing
+       
+    Return:
+    clean_tokens (list of strings) :  List containing normalized and lemmatize word tokens
+    
+    '''
+
     #: tokenize text
     tokens= word_tokenize(text)
     
@@ -45,24 +69,66 @@ def tokenize(text):
 
 
 def build_model():
+
+    '''
+    Build model with GridSearch to find the optimized parameters
+    
+    Return:
+    model (pipeline): model 
+    
+    '''
+
     pipeline = Pipeline([
         ('vector', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
         ('clf', MultiOutputClassifier(RandomForestClassifier()))
     ])
 
-    return pipeline
+    parameters ={
+        'clf__estimator__n_estimators': [10, 50]
+        #'clf__estimator__min_samples_split': [2, 10],
+        #'clf__estimator__min_samples_leaf': [1, 4]
+        #'clf__estimator__max_depth': [20, None]
+    }
+
+    model = GridSearchCV(estimator=pipeline, param_grid=parameters, cv=3, n_jobs = -1, verbose = 2)
+
+    return model
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
     
+    '''
+    Evaluate model
+    
+    Parameter:
+    model (pipeline) :  sklearn estimator model
+    X_test (numpy.ndarray) :  message test data
+    Y_test (numpy.ndarray) :  categories labeled data
+    category_names (list) :  category names.
+    
+    Return:
+    None
+    '''
+
     #: model  = pipeline
     y_predict = model.predict(X_test)
     print(classification_report(Y_test.values, y_predict, target_names=category_names))
     return
 
 def save_model(model, model_filepath):
-    
+    '''
+    Save model into a file
+
+    Parameter:
+    model (pipeline) : sklearn estimator model
+    model_filepath (string) : filename to save the model
+
+    Return:
+    None
+
+    '''
+
     with open(model_filepath, 'wb') as model_file:
         pickle.dump(model, model_file)
     return

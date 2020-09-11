@@ -4,6 +4,20 @@ import numpy as np
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    '''
+    Load the data set
+
+    load the message and categoreis text data set
+
+    Parameters:
+    messages_filepath (string) : Description of message text file path 
+    categories_filepath (string) : Description of categories text file path
+
+    Returns:
+    df (DataFrame) : merged data set of message and categoreis text
+
+    '''
+
     # load messages dataset
     messages = pd.read_csv(messages_filepath)
     messages.head()
@@ -16,7 +30,23 @@ def load_data(messages_filepath, categories_filepath):
     return df
     
 def clean_data(df):
+    '''
+    Clean the data in the DataFrame
+
+    performs various data cleansing steps including: 
+        Splits the single 'category' column into indivdual columns
+        Extract category names 
+        Trim column values to indicator value then convert to int and set it eigher 0 or 1
+        Drop any duplicate
     
+    Parameters:
+    df (DataFrame) :  message and categories text data
+    
+    Returns:
+    df (DataFrame) : cleaned dataset 
+    
+    '''
+
     # create a dataframe of the 36 individual category columns
     categories = df['categories'].str.split(';', expand=True)
     categories.head()
@@ -59,8 +89,19 @@ def clean_data(df):
     return df
 
 def save_data(df, database_filename):
+    '''
+    Save data into database file
+
+    Parameters:
+    df (DataFrame) : DataFrame to be saved as a table into DB
+    database_filename (string) : database file name to store the table
+
+    Return:
+    None
+
+    '''
     engine = create_engine('sqlite:///' + database_filename)
-    df.to_sql('tbl_diaster_text', engine, index=False,if_exists = 'replace')  
+    df.to_sql('tbl_disaster_message', engine, index=False,if_exists = 'replace')  
 
 
 def main():
