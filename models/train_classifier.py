@@ -13,9 +13,11 @@ from nltk.stem import WordNetLemmatizer
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier,AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV
 
 def load_data(database_filepath):
     '''
@@ -31,7 +33,7 @@ def load_data(database_filepath):
 
     '''
 
-    df = pd.read_sql_table('tbl_diaster_text', 'sqlite:///' + database_filepath)  
+    df = pd.read_sql_table('tbl_disaster_message', 'sqlite:///' + database_filepath)  
     X = df.loc[:,'message'] 
     Y = df.iloc[:, 4:] 
     category_names = Y.columns.values
@@ -81,17 +83,21 @@ def build_model():
     pipeline = Pipeline([
         ('vector', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
-        ('clf', MultiOutputClassifier(RandomForestClassifier()))
+    #    ('clf', MultiOutputClassifier(RandomForestClassifier()))
+        ('clf', MultiOutputClassifier(
+            AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=1, class_weight='balanced'))
+        ))
     ])
 
     parameters ={
-        'clf__estimator__n_estimators': [10, 50]
+        'clf__estimator__learning_rate': [0.2, 0.3]
+        #'clf__estimator__n_estimators': [10, 50]
         #'clf__estimator__min_samples_split': [2, 10],
         #'clf__estimator__min_samples_leaf': [1, 4]
         #'clf__estimator__max_depth': [20, None]
     }
 
-    model = GridSearchCV(estimator=pipeline, param_grid=parameters, cv=3, n_jobs = -1, verbose = 2)
+    model = GridSearchCV(estimator=pipeline, param_grid=parameters, cv=3, n_jobs = -1, verbose = 3)
 
     return model
 
