@@ -41,7 +41,13 @@ def index():
     # extract data needed for visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+        
+    # Find the top 3 categories
+    top3_df = df.drop(['id', 'message', 'original', 'genre'], axis = 1).sum()/len(df)
+    top3_df=(top3_df.sort_values(ascending=False)[0:3])
+    top3_names = list(top3_df.index)
+    top3_prop = top3_df[0:3]
+
     # create visuals
     graphs = [
         {
@@ -56,6 +62,24 @@ def index():
                 'title': 'Distribution of Message Genres',
                 'yaxis': {
                     'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Genre"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=top3_names,
+                    y=top3_prop
+                )
+            ],
+
+            'layout': {
+                'title': 'Top 3 messages',
+                'yaxis': {
+                    'title': "Proportion"
                 },
                 'xaxis': {
                     'title': "Genre"
